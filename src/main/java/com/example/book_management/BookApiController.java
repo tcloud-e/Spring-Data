@@ -1,71 +1,87 @@
 package com.example.book_management;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.Optional;
 
-@RestController
-@RequestMapping("/api/v1/books")
-@CrossOrigin(origins = "*")
+@Controller
+@RequestMapping("/books")
 public class BookApiController {
     @Autowired
     private BookService bookService;
 
-    // 一覧取得: GET /api/v1/books
+    // 一覧表示
     @GetMapping
-    public ResponseEntity<List<Book>> getAllBooks() {
-        List<Book> books = bookService.getAllBooks();
-        return ResponseEntity.ok(books);
+    public String listBooks(Model model) {
+        model.addAttribute("books", bookService.getAllBooks());
+        model.addAttribute("bookForm", new BookForm());
+        return "books";
     }
 
-    // 詳細取得: GET /api/v1/books/{id}
-    @GetMapping("/{id}")
-    public ResponseEntity<Book> getBookById(@PathVariable Long id) {
-        Optional<Book> book = bookService.getBookById(id);
-        if (book.isPresent()) {
-            return ResponseEntity.ok(book.get());
+    // 書籍登録（バリデーション付き）
+    @PostMapping("/create")
+    public String createBook(@Valid @ModelAttribute BookForm bookForm, BindingResult result, Model model) {
+        if (result.hasErrors()) {
+            // バリデーションエラーがある場合、一覧画面に戻す
+            model.addAttribute("books", bookService.getAllBooks());
+            return "books";
         }
-        return ResponseEntity.notFound().build();
+
+        // バリデーション成功時、Bookオブジェクトに変換して保存
+        Book book = new Book();
+        book.setTitle(bookForm.getTitle());
+        book.setAuthor(bookForm.getAuthor());
+        book.setIsbn(bookForm.getIsbn());
+        book.setPrice(bookForm.getPrice());
+        bookService.createBook(book);
+
+        return "redirect:/books";
     }
 
-    // 新規登録: POST /api/v1/books
-    @PostMapping
-    public ResponseEntity<Book> createBook(@RequestBody Book book) {
-        Book createdBook = bookService.createBook(book);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdBook);
-    }
-
-    // 更新: PUT /api/v1/books/{id}
-    @PutMapping("/{id}")
-    public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody Book bookDetails) {
-        Book updatedBook = bookService.updateBook(id, bookDetails);
-        if (updatedBook != null) {
-            return ResponseEntity.ok(updatedBook);
+    // 編集画面表示
+    @GetMapping("/edit")
+    public String editBookForm(@RequestParam Long id, Model model) {
+        Book book = bookService.getBookById(id).orElse(null);
+        if (book != null) {
+            BookForm bookForm = new BookForm();
+            bookForm.setTitle(book.getTitle());
+            bookForm.setAuthor(book.getAuthor());
+            bookForm.setIsbn(book.getIsbn());
+            bookForm.setPrice(book.getPrice());
+            model.addAttribute("bookForm", bookForm);
+            model.addAttribute("bookId", id);
+            return "edit";
         }
-        return ResponseEntity.notFound().build();
+        return "redirect:/books";
     }
 
-    // 更新: PATCH /api/v1/books/{id}
-    @PatchMapping("/{id}")
-    public ResponseEntity<Book> patchBook(@PathVariable Long id, @RequestBody Book bookDetails) {
-        Book updatedBook = bookService.updateBook(id, bookDetails);
-        if (updatedBook != null) {
-            return ResponseEntity.ok(updatedBook);
+    // 書籍更新（バリデーション付き）
+    @PostMapping("/edit")
+    public String updateBook(@RequestParam Long id, @Valid @ModelAttribute BookForm bookForm, BindingResult result, Model model) {
+        if (result.hasErrors()) {
+            // バリデーションエラーがある場合、編集画面に戻す
+            model.addAttribute("bookId", id);
+            return "edit";
         }
-        return ResponseEntity.notFound().build();
+
+        // バリデーション成功時、書籍を更新
+        Book bookDetails = new Book();
+        bookDetails.setTitle(bookForm.getTitle());
+        bookDetails.setAuthor(bookForm.getAuthor());
+        bookDetails.setIsbn(bookForm.getIsbn());
+        bookDetails.setPrice(bookForm.getPrice());
+        bookService.updateBook(id, bookDetails);
+
+        return "redirect:/books";
     }
 
-    // 削除: DELETE /api/v1/books/{id}
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
-        Optional<Book> book = bookService.getBookById(id);
-        if (book.isPresent()) {
-            bookService.deleteBook(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+    // 削除
+    @PostMapping("/delete")
+    public String deleteBook(@RequestParam Long id) {
+        bookService.deleteBook(id);
+        return "redirect:/books";
     }
 }

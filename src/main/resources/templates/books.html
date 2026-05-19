@@ -24,25 +24,33 @@
     <h1>書籍管理システム</h1>
 
     <h2>新規書籍登録</h2>
-    <form th:action="@{/books/create}" method="post">
-        <div class="form-group">
-            <label>タイトル:</label>
-            <input type="text" name="title" required>
-        </div>
-        <div class="form-group">
-            <label>著者:</label>
-            <input type="text" name="author" required>
-        </div>
-        <div class="form-group">
-            <label>ISBN:</label>
-            <input type="text" name="isbn" required>
-        </div>
-        <div class="form-group">
-            <label>価格:</label>
-            <input type="number" name="price" step="0.01" required>
-        </div>
-        <button type="submit">登録</button>
-    </form>
+<form th:action="@{/books/create}" th:object="${bookForm}" method="post">
+    <div>
+        <label>タイトル</label>
+        <input type="text" th:field="*{title}" />
+        <span th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+    </div>
+
+    <div>
+        <label>著者</label>
+        <input type="text" th:field="*{author}" />
+        <span th:if="${#fields.hasErrors('author')}" th:errors="*{author}"></span>
+    </div>
+
+    <div>
+        <label>ISBN</label>
+        <input type="text" th:field="*{isbn}" />
+        <span th:if="${#fields.hasErrors('isbn')}" th:errors="*{isbn}"></span>
+    </div>
+
+    <div>
+        <label>価格</label>
+        <input type="number" th:field="*{price}" />
+        <span th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></span>
+    </div>
+
+    <button type="submit">登録</button>
+</form>
 
     <h2>書籍一覧</h2>
     <table th:if="${books.size() > 0}">
