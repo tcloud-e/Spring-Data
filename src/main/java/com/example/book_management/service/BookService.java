@@ -1,7 +1,11 @@
-package com.example.book_management;
+package com.example.book_management.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.example.book_management.Book;
+import com.example.book_management.repository.BookRepository;
+
 import java.util.List;
 import java.util.Optional;
 
