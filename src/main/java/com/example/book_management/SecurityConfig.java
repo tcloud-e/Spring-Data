@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .requestMatchers("/books").hasAnyRole("USER", "ADMIN")
                 .anyRequest().authenticated()
             )
-            .formLogin(form -> form.loginPage("/login").permitAll())
+            .formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/books", true).permitAll())
             .logout(logout -> logout.permitAll());
 
         return http.build();
